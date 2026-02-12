@@ -56,7 +56,6 @@ Scan the QR code with your **Expo Go** app (Android/iOS) or press `w` to run in 
 cls-marketpulse/
 ├── backend/          # Rust API Source Code
 ├── client/           # React Native Expo App
-├── k8s/             # Kubernetes Manifests
 ├── docker-compose.yml # Local Dev Database
 └── README.md         # This file
 ```
