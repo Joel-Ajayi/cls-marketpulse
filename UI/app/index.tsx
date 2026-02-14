@@ -63,7 +63,7 @@ export default function Splash() {
                 </View>
 
                 <TouchableOpacity
-                    onPress={() => router.push('/(tabs)')}
+                    onPress={() => router.push('/auth/login')}
                     className="bg-[#047857] w-[85%] py-4 rounded-full items-center shadow-md shadow-green-200"
                 >
                     <Text className="text-white font-bold text-lg">GET STARTED</Text>

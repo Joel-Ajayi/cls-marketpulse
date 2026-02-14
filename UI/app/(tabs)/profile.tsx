@@ -2,9 +2,11 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from 'react-n
 import { LogOut, Download, ChevronRight, User, Moon, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from "nativewind";
+import { useAuth } from '../../context/AuthContext';
 
 export default function Profile() {
     const router = useRouter();
+    const { signOut } = useAuth();
     const { colorScheme, toggleColorScheme } = useColorScheme();
 
     const handleLogout = () => {
@@ -16,9 +18,8 @@ export default function Profile() {
                 {
                     text: "Log Out",
                     style: 'destructive',
-                    onPress: () => {
-                        // TODO: Clear session
-                        router.replace('/auth/login');
+                    onPress: async () => {
+                        await signOut();
                     }
                 }
             ]
