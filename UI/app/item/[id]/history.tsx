@@ -57,20 +57,20 @@ export default function History() {
     const currentPrice = currentData[currentData.length - 1].price;
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <View className="px-6 py-4 flex-row items-center border-b border-gray-100">
-                <TouchableOpacity onPress={() => router.back()} className="mr-4 p-2 bg-gray-100 rounded-full">
-                    <ArrowLeft size={20} color="#047857" />
+        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
+            <View className="px-6 py-4 flex-row items-center border-b border-gray-100 dark:border-slate-800 bg-[#047857]">
+                <TouchableOpacity onPress={() => router.back()} className="mr-4 p-2 bg-white/20 rounded-full">
+                    <ArrowLeft size={20} color="white" />
                 </TouchableOpacity>
                 <View>
-                    <Text className="text-xl font-bold text-gray-900">Price History</Text>
-                    <Text className="text-sm text-gray-500">Rice (Foreign)</Text>
+                    <Text className="text-xl font-bold text-white">Price History</Text>
+                    <Text className="text-sm text-green-100 opacity-80">Rice (Foreign)</Text>
                 </View>
             </View>
 
             <ScrollView className="flex-1">
-                <View className="px-6 pb-6">
-                    <Text className="text-gray-900 font-bold mb-3">Unit: {selectedUnit}</Text>
+                <View className="px-6 pb-6 pt-6">
+                    <Text className="text-gray-900 dark:text-white font-bold mb-3">Unit: {selectedUnit}</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
                         {UNITS.map((u) => (
                             <TouchableOpacity
@@ -78,18 +78,18 @@ export default function History() {
                                 onPress={() => setSelectedUnit(u)}
                                 className={`mr-3 px-4 py-2 rounded-full border ${selectedUnit === u
                                     ? 'bg-[#047857] border-[#047857]'
-                                    : 'bg-white border-gray-200'
+                                    : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700'
                                     }`}
                             >
-                                <Text className={selectedUnit === u ? 'text-white font-medium' : 'text-gray-600'}>
+                                <Text className={selectedUnit === u ? 'text-white font-medium' : 'text-gray-600 dark:text-gray-300'}>
                                     {u}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
 
-                    <Text className="text-gray-500 mb-2">Visual Trends</Text>
-                    <Text className="text-3xl font-bold text-[#047857]">₦{currentPrice.toLocaleString()}</Text>
+                    <Text className="text-gray-500 dark:text-gray-400 mb-2">Visual Trends</Text>
+                    <Text className="text-3xl font-bold text-[#047857] dark:text-green-400">₦{currentPrice.toLocaleString()}</Text>
                     <Text className="text-red-500 text-sm font-medium">+35.4% vs Jan</Text>
                 </View>
 
@@ -134,19 +134,19 @@ export default function History() {
                     {['1W', '1M', '3M', '6M', '1Y', 'ALL'].map((period) => (
                         <TouchableOpacity
                             key={period}
-                            className={`px-4 py-2 rounded-full ${period === '6M' ? 'bg-[#047857]' : 'bg-gray-100'}`}
+                            className={`px-4 py-2 rounded-full ${period === '6M' ? 'bg-[#047857]' : 'bg-gray-100 dark:bg-slate-800'}`}
                         >
-                            <Text className={period === '6M' ? 'text-white' : 'text-gray-600'}>{period}</Text>
+                            <Text className={period === '6M' ? 'text-white' : 'text-gray-600 dark:text-gray-300'}>{period}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                <View className="px-6">
-                    <View className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex-row items-start">
+                <View className="px-6 mb-8">
+                    <View className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 flex-row items-start">
                         <Calendar size={20} color="#3b82f6" className="mt-1" />
                         <View className="ml-3 flex-1">
-                            <Text className="text-blue-800 font-bold mb-1">Seasonal Insight</Text>
-                            <Text className="text-blue-600 text-sm leading-5">
+                            <Text className="text-blue-800 dark:text-blue-200 font-bold mb-1">Seasonal Insight</Text>
+                            <Text className="text-blue-600 dark:text-blue-300 text-sm leading-5">
                                 Prices typically spike in December due to holiday demand. consider stocking up in October.
                             </Text>
                         </View>

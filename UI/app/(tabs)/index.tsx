@@ -36,18 +36,19 @@ export default function Dashboard() {
     });
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50">
+        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-900">
             {/* Header */}
-            <View className="px-6 py-4 bg-white border-b border-gray-100">
-                <Text className="text-sm text-gray-500 font-medium">Location: Lagos, NG</Text>
-                <Text className="text-2xl font-bold text-gray-900">Market Board</Text>
+            <View className="p-6 pt-16 pb min-h-[220px] bg-[#047857] pb-8 rounded-b-3xl mt-[-55px] shadow-lg z-10">
+                <Text className="text-sm text-green-100 font-medium opacity-90">Location: Lagos, NG</Text>
+                <Text className="text-3xl font-bold text-white mt-1">Market Board</Text>
 
                 {/* Search Bar */}
-                <View className="mt-4 flex-row items-center bg-gray-100 rounded-xl px-4 py-3">
-                    <Search size={20} color="#9CA3AF" />
+                <View className="mt-6 flex-row items-center bg-white/20 border border-white/30 rounded-2xl px-4 py-3">
+                    <Search size={20} color="white" />
                     <TextInput
-                        className="flex-1 ml-2 text-base"
+                        className="flex-1 ml-2 text-base text-white placeholder:text-green-100"
                         placeholder="Search items..."
+                        placeholderTextColor="rgba(255,255,255,0.7)"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
@@ -55,7 +56,7 @@ export default function Dashboard() {
             </View>
 
             {/* Categories */}
-            <View className="py-4">
+            <View className="py-6">
                 <FlatList
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -65,9 +66,9 @@ export default function Dashboard() {
                     ListHeaderComponent={() => (
                         <TouchableOpacity
                             onPress={() => router.push('/categories/manage')}
-                            className="mr-3 px-3 py-2 rounded-full bg-gray-100 border border-gray-200 flex-row items-center"
+                            className="mr-3 px-3 py-2 rounded-full bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex-row items-center"
                         >
-                            <Text className="text-gray-600 font-medium text-xs">Manage</Text>
+                            <Text className="text-gray-600 dark:text-gray-300 font-medium text-xs">Manage</Text>
                         </TouchableOpacity>
                     )}
                     renderItem={({ item }) => (
@@ -75,10 +76,10 @@ export default function Dashboard() {
                             onPress={() => setSelectedCategory(item.name)}
                             className={`mr-3 px-5 py-2 rounded-full border ${selectedCategory === item.name
                                 ? 'bg-[#047857] border-[#047857]'
-                                : 'bg-white border-gray-200'
+                                : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700'
                                 }`}
                         >
-                            <Text className={`font-medium ${selectedCategory === item.name ? 'text-white' : 'text-gray-700'
+                            <Text className={`font-medium ${selectedCategory === item.name ? 'text-white' : 'text-gray-700 dark:text-gray-300'
                                 }`}>
                                 {item.name}
                             </Text>
@@ -100,24 +101,23 @@ export default function Dashboard() {
                     return (
                         <TouchableOpacity
                             onPress={() => router.push(`/item/${item.id}`)}
-                            className="bg-white rounded-2xl mb-4 p-4 shadow-sm shadow-gray-100 flex-row items-center"
+                            className="bg-white dark:bg-slate-800 rounded-2xl mb-4 p-4 shadow-md shadow-gray-100 dark:shadow-none border border-gray-100 dark:border-slate-700 flex-row items-center"
                         >
-                            <View className="w-12 h-12 bg-gray-100 rounded-full items-center justify-center mr-4">
+                            <View className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-full items-center justify-center mr-4">
                                 <Text className="text-xl">📦</Text>
-                                {/* Placeholder for image */}
                             </View>
 
                             <View className="flex-1">
-                                <Text className="font-bold text-gray-900 text-lg">{item.name}</Text>
-                                <Text className="text-gray-500 text-sm">{item.category}</Text>
+                                <Text className="font-bold text-gray-900 dark:text-white text-lg">{item.name}</Text>
+                                <Text className="text-gray-500 dark:text-gray-400 text-sm">{item.category}</Text>
                             </View>
 
                             <View className="items-end">
-                                <Text className="font-bold text-gray-900 text-lg">{formatCurrency(item.price)}</Text>
+                                <Text className="font-bold text-gray-900 dark:text-green-400 text-lg">{formatCurrency(item.price)}</Text>
                                 <View className="flex-row items-center">
                                     {isUp && <TrendingUp size={14} color="#ef4444" />}
                                     {isDown && <TrendingDown size={14} color="#047857" />}
-                                    <Text className={`ml-1 text-xs font-medium ${isUp ? 'text-red-500' : isDown ? 'text-[#047857]' : 'text-gray-400'
+                                    <Text className={`ml-1 text-xs font-medium ${isUp ? 'text-red-500' : isDown ? 'text-[#047857] dark:text-green-400' : 'text-gray-400'
                                         }`}>
                                         {isUp ? 'Inflation' : isDown ? 'Deflation' : 'Stable'}
                                     </Text>

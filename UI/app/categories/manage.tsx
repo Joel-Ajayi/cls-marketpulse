@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, FlatList, TextInput, Alert, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Edit2, Trash2, X, Check } from 'lucide-react-native';
+import { ArrowLeft, Plus, Edit2, X, Check } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Dummy Initial Data
@@ -40,20 +40,7 @@ export default function ManageCategories() {
         setModalVisible(true);
     };
 
-    const handleDelete = (id: string) => {
-        Alert.alert(
-            "Delete Category",
-            "Are you sure? Items in this category might be affected.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: 'destructive',
-                    onPress: () => setCategories(prev => prev.filter(c => c.id !== id))
-                }
-            ]
-        );
-    };
+    // Delete functionality removed as per requirements
 
     const handleSave = () => {
         if (categoryName.trim().length === 0) return;
@@ -76,25 +63,26 @@ export default function ManageCategories() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
             {/* Header */}
-            <View className="px-6 py-4 flex-row items-center border-b border-gray-100 justify-between">
-                <View className="flex-row items-center">
-                    <TouchableOpacity onPress={() => router.back()} className="mr-4 p-2 bg-gray-100 rounded-full">
-                        <ArrowLeft size={20} color="#047857" />
+            <View className="px-6 mt-[-55px] pt-16 pb-4 flex-row items-center border-b border-gray-100 dark:border-slate-800 bg-[#047857] shadow-sm">
+                <View className="flex-row items-center flex-1">
+                    <TouchableOpacity onPress={() => router.back()} className="mr-4 p-2 bg-white/20 rounded-full">
+                        <ArrowLeft size={20} color="white" />
                     </TouchableOpacity>
-                    <Text className="text-xl font-bold text-gray-900">Manage Categories</Text>
+                    <Text className="text-xl font-bold text-white">Manage Categories</Text>
                 </View>
-                <TouchableOpacity onPress={handleAdd} className="bg-[#047857] p-2 rounded-full">
-                    <Plus size={20} color="white" />
+                <TouchableOpacity onPress={handleAdd} className="bg-white p-2 rounded-full shadow-sm">
+                    <Plus size={20} color="#047857" />
                 </TouchableOpacity>
             </View>
 
             {/* Search */}
-            <View className="px-6 py-4 bg-gray-50 border-b border-gray-100">
+            <View className="px-6 py-4 bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800">
                 <TextInput
-                    className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-base"
+                    className="bg-white dark:bg-slate-800 dark:text-white border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-base"
                     placeholder="Search categories..."
+                    placeholderTextColor="#9CA3AF"
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
@@ -106,17 +94,14 @@ export default function ManageCategories() {
                 keyExtractor={item => item.id}
                 contentContainerStyle={{ padding: 24 }}
                 renderItem={({ item }) => (
-                    <View className="flex-row items-center justify-between bg-white bg-gray-50 p-4 rounded-xl mb-3 border border-gray-100">
+                    <View className="flex-row items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl mb-3 border border-gray-100 dark:border-slate-700 shadow-sm dark:shadow-none">
                         <View>
-                            <Text className="text-lg font-bold text-gray-900">{item.name}</Text>
-                            <Text className="text-sm text-gray-500">{item.itemsCount} items</Text>
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white">{item.name}</Text>
+                            <Text className="text-sm text-gray-500 dark:text-gray-400">{item.itemsCount} items</Text>
                         </View>
                         <View className="flex-row gap-3">
-                            <TouchableOpacity onPress={() => handleEdit(item)} className="p-2 bg-green-50 rounded-lg">
+                            <TouchableOpacity onPress={() => handleEdit(item)} className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                                 <Edit2 size={18} color="#047857" />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleDelete(item.id)} className="p-2 bg-red-50 rounded-lg">
-                                <Trash2 size={18} color="#dc2626" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -134,9 +119,9 @@ export default function ManageCategories() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     className="flex-1 justify-end bg-black/50"
                 >
-                    <View className="bg-white rounded-t-3xl p-6 pb-10">
+                    <View className="bg-white dark:bg-slate-800 rounded-t-3xl p-6 pb-10">
                         <View className="flex-row justify-between items-center mb-6">
-                            <Text className="text-xl font-bold text-gray-900">
+                            <Text className="text-xl font-bold text-gray-900 dark:text-white">
                                 {editingCategory ? 'Edit Category' : 'New Category'}
                             </Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -144,10 +129,11 @@ export default function ManageCategories() {
                             </TouchableOpacity>
                         </View>
 
-                        <Text className="text-gray-500 mb-2 font-medium">Category Name</Text>
+                        <Text className="text-gray-500 dark:text-gray-400 mb-2 font-medium">Category Name</Text>
                         <TextInput
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-lg mb-6"
+                            className="bg-gray-50 dark:bg-slate-700 dark:text-white border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-lg mb-6"
                             placeholder="e.g. Fruits"
+                            placeholderTextColor="#9CA3AF"
                             value={categoryName}
                             onChangeText={setCategoryName}
                             autoFocus
@@ -155,7 +141,7 @@ export default function ManageCategories() {
 
                         <TouchableOpacity
                             onPress={handleSave}
-                            className="bg-[#047857] w-full py-4 rounded-xl items-center flex-row justify-center"
+                            className="bg-[#047857] w-full py-4 rounded-xl items-center flex-row justify-center shadow-lg dark:shadow-none"
                         >
                             <Check size={20} color="white" className="mr-2" />
                             <Text className="text-white font-bold text-lg">Save Category</Text>
