@@ -7,7 +7,7 @@ export default function TabLayout() {
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: '#22c55e', // green-500
+                tabBarActiveTintColor: '#047857', // green-700
                 tabBarInactiveTintColor: '#9ca3af', // gray-400
                 tabBarStyle: {
                     borderTopWidth: 0,
@@ -30,27 +30,22 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* 
-        This is a dummy screen to show the prominent "Add" button in the middle.
-        In reality, we might want this to open a modal or navigate to a different stack.
-        For now, we'll route it to the 'add-price' screen via a listener or just let it exist.
-        Actually, let's make it a button that navigates to the global 'add-price' modal.
-      */}
             <Tabs.Screen
                 name="add_placeholder"
                 options={{
                     title: '',
                     tabBarIcon: ({ color }) => (
-                        <View className="bg-green-500 p-3 rounded-full -mt-4 shadow-lg shadow-green-200">
-                            <PlusCircle size={30} color="white" />
+                        <View className="bg-[#047857] p-3 rounded-full -mt-[-5px] shadow-lg shadow-green-200">
+                            <PlusCircle size={20} color="white" />
                         </View>
                     ),
-                    href: '/add-price', // Directs to the /add-price route
+                    href: '/item/add_price', // Directs to the /add-price route
                 }}
                 listeners={({ navigation }) => ({
                     tabPress: (e) => {
                         e.preventDefault();
-                        navigation.navigate('add-price');
+                        const router = require('expo-router').router;
+                        router.push('/item/add_price');
                     },
                 })}
             />
