@@ -173,17 +173,66 @@ export default function History() {
                         </View>
                     )}
 
-                    {/* Time Filters - Visual Only for now as backend doesn't support generic filtering yet */}
-                    {/* <View className="flex-row justify-center space-x-4 mb-8 mt-6">
-                        {['1M', 'ALL'].map((period) => (
-                            <TouchableOpacity
-                                key={period}
-                                className={`px-4 py-2 rounded-full ${period === 'ALL' ? 'bg-[#047857]' : 'bg-gray-100 dark:bg-slate-800'}`}
-                            >
-                                <Text className={period === 'ALL' ? 'text-white' : 'text-gray-600 dark:text-gray-300'}>{period}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View> */}
+                    {/* Detailed Stats Grid */}
+                    {chartData.length > 0 && (
+                        <View className="px-6 mt-6">
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">Statistics</Text>
+                            <View className="flex-row flex-wrap justify-between">
+                                <View className="w-[48%] bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mb-4 border border-gray-100 dark:border-slate-700">
+                                    <Text className="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">Lowest</Text>
+                                    <Text className="text-lg font-bold text-[#047857] dark:text-green-400">
+                                        ₦{Math.min(...chartData.map(d => d.price)).toLocaleString()}
+                                    </Text>
+                                </View>
+                                <View className="w-[48%] bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mb-4 border border-gray-100 dark:border-slate-700">
+                                    <Text className="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">Highest</Text>
+                                    <Text className="text-lg font-bold text-red-500">
+                                        ₦{Math.max(...chartData.map(d => d.price)).toLocaleString()}
+                                    </Text>
+                                </View>
+                                <View className="w-[48%] bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mb-4 border border-gray-100 dark:border-slate-700">
+                                    <Text className="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">Average</Text>
+                                    <Text className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                        ₦{Math.round(chartData.reduce((a, b) => a + b.price, 0) / chartData.length).toLocaleString()}
+                                    </Text>
+                                </View>
+                                <View className="w-[48%] bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mb-4 border border-gray-100 dark:border-slate-700">
+                                    <Text className="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">Entries</Text>
+                                    <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                                        {chartData.length}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Recent Transactions List */}
+                    {chartData.length > 0 && (
+                        <View className="px-6 mt-2 mb-6">
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">Recent Updates</Text>
+                            {/* Show last 5 entries, reversed (newest first) */}
+                            {[...chartData].reverse().slice(0, 5).map((item, index) => (
+                                <View key={index} className="flex-row justify-between items-center py-3 border-b border-gray-100 dark:border-slate-800">
+                                    <View className="flex-row items-center">
+                                        <View className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full mr-3">
+                                            <Calendar size={16} color="#047857" />
+                                        </View>
+                                        <View>
+                                            <Text className="font-medium text-gray-900 dark:text-white">
+                                                {new Date(item.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                            </Text>
+                                            <Text className="text-xs text-gray-500 dark:text-gray-400">
+                                                {new Date(item.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <Text className="font-bold text-gray-900 dark:text-white text-base">
+                                        ₦{item.price.toLocaleString()}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
 
                     <View className="px-6 mb-8 mt-6">
                         <View className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 flex-row items-start">

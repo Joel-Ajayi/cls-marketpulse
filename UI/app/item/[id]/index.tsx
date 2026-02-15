@@ -70,8 +70,47 @@ export default function ItemDetails() {
         const max = Math.max(...prices);
         const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
 
-        return { min, max, avg };
+        return { min, max, avg, prices };
     }, [history, selectedUnit]);
+
+    const additionalMetrics = useMemo(() => {
+        if (!selectedUnit || history.length === 0) return null;
+
+        const filtered = history.filter(h => h.unit === selectedUnit);
+        if (filtered.length === 0) return null;
+
+        // Last Updated
+        const lastDate = new Date(filtered[filtered.length - 1].date);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+        const lastUpdated = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
+
+        // Recommendation
+        const latestPrice = filtered[filtered.length - 1].price;
+        const avg = stats.avg;
+        let recommendation = 'Fair Price';
+        let recColor = 'text-blue-600';
+
+        if (latestPrice < avg * 0.9) {
+            recommendation = 'Great Buy!';
+            recColor = 'text-green-600';
+        } else if (latestPrice > avg * 1.1) {
+            recommendation = 'High Price';
+            recColor = 'text-red-500';
+        }
+
+        // Volatility (Standard Deviation)
+        const prices = stats.prices || [];
+        const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
+        const stdDev = Math.sqrt(variance);
+        const volatility = (stdDev / avg) * 100; // Coefficient of Variation %
+
+        let volatilityLabel = 'Stable';
+        if (volatility > 20) volatilityLabel = 'High Fluctuation';
+        else if (volatility > 10) volatilityLabel = 'Moderate';
+
+        return { lastUpdated, recommendation, recColor, volatilityLabel };
+    }, [history, selectedUnit, stats]);
 
     // Get unique units for selector
     const units = useMemo(() => {
@@ -227,6 +266,27 @@ export default function ItemDetails() {
                     ) : (
                         <View className="bg-gray-50 p-4 rounded-2xl mb-6 items-center">
                             <Text className="text-gray-400">No price history available yet.</Text>
+                        </View>
+                    )}
+
+                    {/* Additional Metrics Grid */}
+                    {additionalMetrics && (
+                        <View className="flex-row flex-wrap justify-between mb-6">
+                            <View className="w-[31%] bg-gray-50 p-3 rounded-xl border border-gray-100 items-center">
+                                <Clock size={16} color="#6b7280" className="mb-2" />
+                                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Last Updated</Text>
+                                <Text className="font-bold text-gray-800 text-center">{additionalMetrics.lastUpdated}</Text>
+                            </View>
+                            <View className="w-[31%] bg-gray-50 p-3 rounded-xl border border-gray-100 items-center">
+                                <TrendingUp size={16} color="#6b7280" className="mb-2" />
+                                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Volatility</Text>
+                                <Text className="font-bold text-gray-800 text-center">{additionalMetrics.volatilityLabel}</Text>
+                            </View>
+                            <View className="w-[31%] bg-gray-50 p-3 rounded-xl border border-gray-100 items-center">
+                                <Tag size={16} color="#6b7280" className="mb-2" />
+                                <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Advice</Text>
+                                <Text className={`font-bold ${additionalMetrics.recColor} text-center`}>{additionalMetrics.recommendation}</Text>
+                            </View>
                         </View>
                     )}
 
