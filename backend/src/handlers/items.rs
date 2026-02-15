@@ -66,8 +66,6 @@ pub async fn list_items(
         });
     }
 
-    println!("Response: {:?}", response);
-
     Ok(Json(response))
 }
 
@@ -139,7 +137,7 @@ pub async fn create_item(
 
     let mut conn = get_connection(&state.db)?;
 
-    // Ensure category belongs to user? Or global categories? 
+    // Ensure category belongs to user? Or global categories?
     // Assuming categories are user specific based onschema.
     // Check if category exists and belongs to user
     let category_exists = categories::table
@@ -150,7 +148,10 @@ pub async fn create_item(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     if category_exists.is_none() {
-         return Err((StatusCode::BAD_REQUEST, "Category not found or does not belong to user".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Category not found or does not belong to user".to_string(),
+        ));
     }
 
     let new_item = diesel::insert_into(items::table)
@@ -222,7 +223,7 @@ pub async fn update_item(
     }
 
     let mut conn = get_connection(&state.db)?;
-    
+
     // Ensure item belongs to user
     let target = items::table
         .filter(items::id.eq(item_id))
@@ -237,15 +238,18 @@ pub async fn update_item(
     }
     if let Some(c) = category_id {
         // Verify new category belongs to user
-         let category_exists = categories::table
+        let category_exists = categories::table
             .filter(categories::id.eq(c))
             .filter(categories::user_id.eq(user.id))
             .first::<Category>(&mut conn)
             .optional()
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-        
+
         if category_exists.is_none() {
-             return Err((StatusCode::BAD_REQUEST, "Category not found or does not belong to user".to_string()));
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "Category not found or does not belong to user".to_string(),
+            ));
         }
 
         diesel::update(target.clone())
@@ -358,7 +362,10 @@ pub async fn delete_item(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     if item_exists.is_none() {
-        return Err((StatusCode::NOT_FOUND, "Item not found or unauthorized".to_string()));
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Item not found or unauthorized".to_string(),
+        ));
     }
 
     // 2. Delete associated price entries first (manual cascade to be safe)
