@@ -32,6 +32,7 @@ FROM debian:bookworm-slim AS final
 # Install runtime libraries for Postgres and SSL
 RUN apt-get update && apt-get install -y \
     libpq5 \
+    libssl3 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
