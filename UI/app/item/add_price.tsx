@@ -1,325 +1,207 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Search, Camera, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { Unit, Item } from '../../types';
+import UnitSelector from '../../components/item/UnitSelector';
+import ItemImagePicker from '../../components/item/ImagePicker';
+
+// Define locally to ensure compatibility
+interface PriceHistoryItem {
+    date: string;
+    unit: string;
+    price: number;
+}
 
 export default function AddPrice() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const isEditMode = params.mode === 'edit';
+    const { user } = useAuth();
+    const { showToast } = useToast();
 
-    const [step, setStep] = useState<'search' | 'form'>('search');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    // Required Params: itemId
+    const itemId = params.itemId as string;
 
-    // New Item Form State
-    const [name, setName] = useState('');
-    const [category, setCategory] = useState('');
-    const [unit, setUnit] = useState('Kg');
+    // State for Item Details (fetched from API)
+    const [fetchedItem, setFetchedItem] = useState<Item | null>(null);
+    const [priceHistory, setPriceHistory] = useState<PriceHistoryItem[]>([]);
+
+    const [unit, setUnit] = useState<Unit | null>(null);
     const [price, setPrice] = useState('');
+    const [units, setUnits] = useState<Unit[]>([]);
 
-    // Dynamic Lists (In a real app, these would come from a context or DB)
-    const [availableUnits, setAvailableUnits] = useState(['Kg', 'Liter', 'Basket', 'Bag', 'Tuber', 'Unit', 'Paint Bucket', 'Crate']);
-    const [availableCategories, setAvailableCategories] = useState(['Grains', 'Vegetables', 'Proteins', 'Tubers', 'Oils', 'Spices']);
-
-    // Modal States
-    const [isUnitModalVisible, setUnitModalVisible] = useState(false);
-    const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
-    const [newItemName, setNewItemName] = useState(''); // reused for both modals
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        if (isEditMode) {
-            setStep('form');
-            if (params.existingName) setName(params.existingName as string);
-            if (params.existingCategory) setCategory(params.existingCategory as string);
+        loadData();
+    }, [itemId]);
+
+    useEffect(() => {
+        if (unit && priceHistory.length > 0) {
+            // Find most recent price for this unit
+            // History is ordered by date ASC (latest at end) based on API check earlier
+            // Actually API code said: .order(price_entries::created_at.desc()) OR .asc()? 
+            // Wait, I saw .order(price_entries::created_at.asc()) in get_history handler.
+            // So last item is latest.
+
+            // let's reverse to find first match from newest
+            const historyReversed = [...priceHistory].reverse();
+            const lastEntry = historyReversed.find(h => h.unit === unit.name);
+
+            if (lastEntry) {
+                // Price in history is number (e.g. 500.0), input expects string
+                // Depending on how backend sends it. Backend divides by 100?
+                // Backend: price: entry.price as f64 (which is integer stored). 
+                // Ah, the generic item list divides by 100? No, wait. 
+                // In prices.rs: push(ItemResponse {... current_price: p.price ...}) where p.price is i64.
+                // In frontend types: current_price?: number.
+                // Usually we divide by 100 if it's cents.
+                // Let's assume the API returns the raw number as stored.
+                // If it was stored as 50000 (meaning 500.00), we need to display 500.
+                // Wait, in `add_price` submit we do: price: parseFloat(price) (sent as f64 to backend payload) -> backend mults by 100.
+                // So backend stores cents.
+                // `get_history` returns `price: entry.price as f64`. So it returns cents.
+                // We need to divide by 100 to show in UI.
+
+                const value = (lastEntry.price / 100).toString();
+                setPrice(value);
+            } else {
+                setPrice('');
+            }
         }
-    }, [isEditMode, params]);
+    }, [unit, priceHistory]);
 
-    const DUMMY_RESULTS = [
-        { id: '1', name: 'Rice (Foreign)', category: 'Grains' },
-        { id: '2', name: 'Rice (Local)', category: 'Grains' },
-    ];
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [itemRes, unitsRes, historyRes] = await Promise.all([
+                api.get<Item>(`/items/${itemId}`),
+                api.get<Unit[]>('/units'),
+                api.get<PriceHistoryItem[]>(`/prices/history/${itemId}`)
+            ]);
 
-    const handleItemSelect = (item: any) => {
-        setSelectedItem(item);
-        setName(item.name);
-        setCategory(item.category);
-        setStep('form');
-    };
+            setFetchedItem(itemRes.data);
+            setUnits(unitsRes.data);
+            setPriceHistory(historyRes.data);
 
-    const handleCreateNew = () => {
-        setSelectedItem(null);
-        setName(searchQuery); // Pre-fill with what user typed
-        setStep('form');
-    };
+            // Auto-select unit if item has one
+            if (itemRes.data.unit) {
+                const matchingUnit = unitsRes.data.find(u => u.name === itemRes.data.unit);
+                if (matchingUnit) {
+                    setUnit(matchingUnit);
+                }
+            }
 
-    const handleAddUnit = () => {
-        if (newItemName.trim()) {
-            setAvailableUnits([...availableUnits, newItemName.trim()]);
-            setUnit(newItemName.trim());
-            setNewItemName('');
-            setUnitModalVisible(false);
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to load item data', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleAddCategory = () => {
-        if (newItemName.trim()) {
-            setAvailableCategories([...availableCategories, newItemName.trim()]);
-            setCategory(newItemName.trim());
-            setNewItemName('');
-            setCategoryModalVisible(false);
+    const handleUnitCreated = (newUnit: Unit) => {
+        setUnits([...units, newUnit]);
+    };
+
+    const handleSubmit = async () => {
+        if (!user || !unit || !price) {
+            showToast('Please fill all fields', 'error');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await api.post('/prices', {
+                item_id: itemId,
+                unit_id: unit.id,
+                price: parseFloat(price),
+            });
+            showToast('Price updated successfully', 'success');
+            router.dismissAll();
+            router.replace('/(tabs)');
+        } catch (error: any) {
+            console.error(error);
+            showToast('Failed to add price', 'error');
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const handleSubmit = () => {
-        // TODO: Convert price to Kobo and submit
-        console.log('Submitting:', {
-            name,
-            category,
-            unit,
-            priceKobo: parseInt(price) * 100,
-            isNewItem: !selectedItem
-        });
-
-        router.push('/(tabs)');
-    };
+    if (loading || !fetchedItem) {
+        return (
+            <SafeAreaView className="flex-1 bg-white dark:bg-slate-900 justify-center items-center">
+                <ActivityIndicator size="large" color="#047857" />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
             <View className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex-row items-center justify-between">
-                <Text className="text-2xl font-bold text-gray-900 dark:text-white">{isEditMode ? 'Edit Item' : 'Add Price'}</Text>
+                <Text className="text-2xl font-bold text-gray-900 dark:text-white">Add Price</Text>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Text className="text-gray-500">Cancel</Text>
+                </TouchableOpacity>
             </View>
 
-            {step === 'search' ? (
-                <View className="p-6">
-                    <View className="flex-row items-center bg-gray-100 dark:bg-slate-800 rounded-xl px-4 py-3 mb-6">
-                        <Search size={20} color="#9CA3AF" />
-                        <TextInput
-                            autoFocus
-                            className="flex-1 ml-2 text-base text-gray-900 dark:text-white"
-                            placeholder="Search for item..."
-                            placeholderTextColor="#9CA3AF"
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                        />
-                    </View>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+                <ScrollView className="p-6">
+                    <ItemImagePicker
+                        image={fetchedItem.image || null}
+                        onImageSelected={() => { }}
+                        disabled={true}
+                    />
 
-                    {searchQuery.length > 0 && (
-                        <View>
-                            {DUMMY_RESULTS.map(item => (
-                                <TouchableOpacity
-                                    key={item.id}
-                                    onPress={() => handleItemSelect(item)}
-                                    className="p-4 border-b border-gray-50 dark:border-slate-800 flex-row justify-between items-center"
-                                >
-                                    <Text className="text-lg text-gray-800 dark:text-gray-100">{item.name}</Text>
-                                    <Text className="text-sm text-gray-500 dark:text-gray-400">{item.category}</Text>
-                                </TouchableOpacity>
-                            ))}
+                    {/* Item Info Card - Computed/Disabled Fields */}
+                    <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Item Name</Text>
+                    <TextInput
+                        className="input bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 p-4 rounded-xl mb-4 text-base"
+                        value={fetchedItem.name}
+                        editable={false}
+                    />
 
-                            <TouchableOpacity
-                                onPress={handleCreateNew}
-                                className="mt-4 flex-row items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl"
-                            >
-                                <Plus size={20} color="#047857" />
-                                <Text className="ml-2 text-[#047857] dark:text-green-400 font-medium">Create "{searchQuery}"</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
-                </View>
-            ) : (
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-                    <ScrollView className="p-6">
-                        {/* Image Picker Stub */}
-                        <TouchableOpacity className="w-full h-48 bg-gray-100 dark:bg-slate-800 rounded-2xl items-center justify-center mb-6 border-2 border-dashed border-gray-300 dark:border-slate-700">
-                            <Camera size={40} color="#9CA3AF" />
-                            <Text className="text-gray-400 mt-2">Take Photo / Upload</Text>
-                        </TouchableOpacity>
+                    <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Category</Text>
+                    <TextInput
+                        className="input bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 p-4 rounded-xl mb-6 text-base"
+                        value={fetchedItem.category_name}
+                        editable={false}
+                    />
 
-                        <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Item Name</Text>
-                        <TextInput
-                            className="input bg-gray-50 dark:bg-slate-800 dark:text-white p-4 rounded-xl mb-4 text-lg"
-                            value={name}
-                            onChangeText={setName}
-                            editable={!selectedItem} // Lock name if selecting existing
-                            placeholderTextColor="#9CA3AF"
-                        />
+                    <UnitSelector
+                        units={units}
+                        selectedUnit={unit}
+                        onSelect={setUnit}
+                        onUnitCreated={handleUnitCreated}
+                    />
 
-                        <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Category</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-                            <TouchableOpacity
-                                onPress={() => {
-                                    setNewItemName('');
-                                    setCategoryModalVisible(true);
-                                }}
-                                className="px-4 py-2 mr-2 rounded-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex-row items-center"
-                            >
-                                <Plus size={14} color="#047857" className="mr-1" />
-                                <Text className="text-[#047857] dark:text-green-400 font-medium">New</Text>
-                            </TouchableOpacity>
-                            {availableCategories.map((c) => (
-                                <TouchableOpacity
-                                    key={c}
-                                    onPress={() => !selectedItem && setCategory(c)} // Lock if existing
-                                    disabled={!!selectedItem}
-                                    className={`mr-2 px-4 py-2 rounded-full border ${category === c
-                                        ? 'bg-[#047857] border-[#047857]'
-                                        : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700'
-                                        }`}
-                                >
-                                    <Text className={category === c ? 'text-white font-medium' : 'text-gray-600 dark:text-gray-300'}>
-                                        {c}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
+                    <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Price (₦)</Text>
+                    <TextInput
+                        className="input bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mb-6 text-2xl font-bold text-[#047857] dark:text-green-400"
+                        value={price}
+                        onChangeText={setPrice}
+                        keyboardType="numeric"
+                        placeholder="0"
+                        placeholderTextColor="#9CA3AF"
+                        autoFocus
+                    />
 
-                        </ScrollView>
-
-                        {!isEditMode && (
-                            <>
-                                <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Unit of Measure</Text>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            setNewItemName('');
-                                            setUnitModalVisible(true);
-                                        }}
-                                        className="px-4 py-2 mr-2 rounded-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex-row items-center"
-                                    >
-                                        <Plus size={14} color="#047857" className="mr-1" />
-                                        <Text className="text-[#047857] dark:text-green-400 font-medium">New</Text>
-                                    </TouchableOpacity>
-                                    {availableUnits.map((u) => (
-                                        <TouchableOpacity
-                                            key={u}
-                                            onPress={() => setUnit(u)}
-                                            className={`mr-2 px-4 py-2 rounded-full border ${unit === u
-                                                ? 'bg-[#047857] border-[#047857]'
-                                                : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700'
-                                                }`}
-                                        >
-                                            <Text className={unit === u ? 'text-white font-medium' : 'text-gray-600 dark:text-gray-300'}>
-                                                {u}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-
-                                <Text className="label mb-2 font-medium text-gray-700 dark:text-gray-300">Price (₦)</Text>
-                                <TextInput
-                                    className="input bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mb-6 text-2xl font-bold text-[#047857] dark:text-green-400"
-                                    value={price}
-                                    onChangeText={setPrice}
-                                    keyboardType="numeric"
-                                    placeholder="0"
-                                    placeholderTextColor="#9CA3AF"
-                                    autoFocus
-                                />
-                            </>
+                    <TouchableOpacity
+                        onPress={handleSubmit}
+                        disabled={submitting}
+                        className={`bg-[#047857] py-4 rounded-xl items-center shadow-lg ${submitting ? 'opacity-70' : ''}`}
+                    >
+                        {submitting ? <ActivityIndicator color="white" /> : (
+                            <Text className="text-white font-bold text-lg">Save Price</Text>
                         )}
-
-                        <TouchableOpacity
-                            onPress={handleSubmit}
-                            className="bg-[#047857] py-4 rounded-xl items-center shadow-lg dark:shadow-none"
-                        >
-                            <Text className="text-white font-bold text-lg">{isEditMode ? 'Update Item' : 'Save Price'}</Text>
-                        </TouchableOpacity>
-
-                        {isEditMode && (
-                            <TouchableOpacity
-                                onPress={() => {
-                                    Alert.alert(
-                                        "Delete Item",
-                                        "Are you sure you want to delete this item? This action cannot be undone.",
-                                        [
-                                            { text: "Cancel", style: "cancel" },
-                                            {
-                                                text: "Delete",
-                                                style: 'destructive',
-                                                onPress: () => {
-                                                    console.log('Deleting item');
-                                                    router.push('/(tabs)');
-                                                }
-                                            }
-                                        ]
-                                    );
-                                }}
-                                className="mt-4 py-4 rounded-xl items-center bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30"
-                            >
-                                <Text className="text-red-600 dark:text-red-400 font-bold text-lg">Delete Item</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        <TouchableOpacity
-                            onPress={() => setStep('search')}
-                            className="mt-4 py-3 items-center"
-                        >
-                            <Text className="text-gray-500 dark:text-gray-400">Cancel</Text>
-                        </TouchableOpacity>
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            )}
-
-            {/* Create Unit Modal */}
-            <Modal
-                visible={isUnitModalVisible}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setUnitModalVisible(false)}
-            >
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1 bg-black/50 justify-center px-6">
-                    <View className="bg-white dark:bg-slate-800 p-6 rounded-2xl">
-                        <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">Create New Unit</Text>
-                        <TextInput
-                            className="bg-gray-50 dark:bg-slate-700 dark:text-white border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3 text-base mb-4"
-                            placeholder="e.g. Sacks, Bundles"
-                            placeholderTextColor="#9CA3AF"
-                            value={newItemName}
-                            onChangeText={setNewItemName}
-                            autoFocus
-                        />
-                        <View className="flex-row justify-end space-x-4">
-                            <TouchableOpacity onPress={() => setUnitModalVisible(false)} className="px-4 py-2">
-                                <Text className="text-gray-500 dark:text-gray-400 font-medium">Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleAddUnit} className="bg-[#047857] px-6 py-2 rounded-lg">
-                                <Text className="text-white font-bold">Create</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
-
-            {/* Create Category Modal */}
-            <Modal
-                visible={isCategoryModalVisible}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setCategoryModalVisible(false)}
-            >
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1 bg-black/50 justify-center px-6">
-                    <View className="bg-white dark:bg-slate-800 p-6 rounded-2xl">
-                        <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">Create New Category</Text>
-                        <TextInput
-                            className="bg-gray-50 dark:bg-slate-700 dark:text-white border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3 text-base mb-4"
-                            placeholder="e.g. Fruits, Beverages"
-                            placeholderTextColor="#9CA3AF"
-                            value={newItemName}
-                            onChangeText={setNewItemName}
-                            autoFocus
-                        />
-                        <View className="flex-row justify-end space-x-4">
-                            <TouchableOpacity onPress={() => setCategoryModalVisible(false)} className="px-4 py-2">
-                                <Text className="text-gray-500 dark:text-gray-400 font-medium">Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleAddCategory} className="bg-[#047857] px-6 py-2 rounded-lg">
-                                <Text className="text-white font-bold">Create</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+                    </TouchableOpacity>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
+

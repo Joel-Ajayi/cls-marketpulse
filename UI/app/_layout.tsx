@@ -66,10 +66,14 @@ function RootLayoutNav() {
     );
 }
 
+import { ToastProvider } from '../context/ToastContext';
+
 export default function Layout() {
     return (
         <AuthProvider>
-            <RootLayoutNav />
+            <ToastProvider>
+                <RootLayoutNav />
+            </ToastProvider>
         </AuthProvider>
     );
 }

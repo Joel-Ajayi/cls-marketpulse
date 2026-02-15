@@ -11,7 +11,14 @@
     },
     "scheme": "marketpulse",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you upload item images.",
+          "cameraPermission": "The app accesses your camera to let you take photos of items."
+        }
+      ]
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",

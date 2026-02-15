@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function Profile() {
     const router = useRouter();
-    const { signOut } = useAuth();
+    const { signOut, user } = useAuth();
     const { colorScheme, toggleColorScheme } = useColorScheme();
 
     const handleLogout = () => {
@@ -26,11 +26,6 @@ export default function Profile() {
         );
     };
 
-    const handleExport = () => {
-        // TODO: Trigger CSV download
-        Alert.alert("Exporting Data", "Your market data is being exported to CSV...");
-    };
-
     return (
         <ScrollView className="flex-1 bg-gray-50 dark:bg-slate-900">
             {/* Header with Primary Color Background */}
@@ -38,27 +33,13 @@ export default function Profile() {
                 <View className="w-24 h-24 bg-white/20 rounded-full items-center justify-center mb-4 border-2 border-white/30">
                     <User size={48} color="white" />
                 </View>
-                <Text className="text-2xl font-bold text-white">John Doe</Text>
-                <Text className="text-green-100">john.doe@example.com</Text>
+                <Text className="text-2xl font-bold text-white">{user?.email}</Text>
             </View>
 
             <View className="bg-white dark:bg-slate-800 border-y border-gray-100 dark:border-slate-700">
                 {/* Theme Toggle Removed - Forced Light Mode */}
 
                 <View className="bg-white dark:bg-slate-800 border-y border-gray-100 dark:border-slate-700">
-                    <TouchableOpacity
-                        onPress={handleExport}
-                        className="flex-row items-center justify-between p-4 border-b border-gray-100 dark:border-slate-700 active:bg-gray-50 dark:active:bg-slate-700"
-                    >
-                        <View className="flex-row items-center">
-                            <View className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
-                                <Download size={20} color="#3b82f6" />
-                            </View>
-                            <Text className="text-base font-medium text-gray-900 dark:text-white">Export Market Data (CSV)</Text>
-                        </View>
-                        <ChevronRight size={20} color="#9CA3AF" />
-                    </TouchableOpacity>
-
                     <TouchableOpacity
                         onPress={handleLogout}
                         className="flex-row items-center justify-between p-4 active:bg-gray-50 dark:active:bg-slate-700"

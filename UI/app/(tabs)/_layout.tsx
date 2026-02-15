@@ -39,13 +39,13 @@ export default function TabLayout() {
                             <PlusCircle size={20} color="white" />
                         </View>
                     ),
-                    href: '/item/add_price', // Directs to the /add-price route
+                    href: '/item/search', // Directs to the /add-price route
                 }}
                 listeners={({ navigation }) => ({
                     tabPress: (e) => {
                         e.preventDefault();
                         const router = require('expo-router').router;
-                        router.push('/item/add_price');
+                        router.push('/item/search');
                     },
                 })}
             />
