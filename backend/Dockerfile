@@ -1,36 +1,22 @@
-# Pin the Rust toolchain version used in the build stage.
 ARG RUST_VERSION=1.92
-
-# Name of the compiled binary produced by Cargo (must match Cargo.toml package name).
 ARG APP_NAME=backend
 
-
-FROM docker.io/library/rust:${RUST_VERSION}-alpine AS build
-
-# Re-declare args inside the stage if you want to use them here.
+FROM docker.io/library/rust:${RUST_VERSION}-slim-bookworm AS build
 ARG APP_NAME
-
-# All build steps happen inside /app.
 WORKDIR /app
 
-# Install build dependencies needed to compile Rust crates on Alpine
-RUN apk add --no-cache \
-    clang \
-    lld \
-    musl-dev \
+# Install Debian build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    perl \
+    make \
+    gcc \
     git \
-    pkgconfig \
-    openssl-dev \
-    openssl-libs-static \
-    strit-dev \
-    zlib-dev \
-    postgresql-dev
+    && rm -rf /var/lib/apt/lists/*
 
-ENV OPENSSL_STATIC=1
-ENV OPENSSL_LIB_DIR=/usr/lib
-ENV OPENSSL_INCLUDE_DIR=/usr/include
-
-# Build the application 
+# Build the application
 RUN --mount=type=bind,source=src,target=src \
     --mount=type=bind,source=Cargo.toml,target=Cargo.toml \
     --mount=type=bind,source=Cargo.lock,target=Cargo.lock \
@@ -40,11 +26,15 @@ RUN --mount=type=bind,source=src,target=src \
     cargo build --locked --release && \
     cp ./target/release/$APP_NAME /bin/server
 
-FROM docker.io/library/alpine:3.18 AS final
+# STEP 2: Use 'debian-slim' for the final image
+FROM debian:bookworm-slim AS final
 
-RUN apk add --no-cache libssl3 libcrypto3 libpq ca-certificates
+# Install runtime libraries for Postgres and SSL
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a non-privileged user (recommended best practice)
 ARG UID=10001
 RUN adduser \
     --disabled-password \
@@ -55,14 +45,10 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-# Drop privileges for runtime.
 USER appuser
-
-# Copy only the compiled binary from the build stage.
 COPY --from=build /bin/server /bin/
 
-# Document the port your app listens on.
+ENV ROCKET_ADDRESS=0.0.0.0
 EXPOSE 8000
 
-# Start the application.
 CMD ["/bin/server"]
