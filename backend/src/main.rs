@@ -17,12 +17,22 @@ pub struct AppState {
     pub db: Pool<ConnectionManager<PgConnection>>,
 }
 
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+
 #[tokio::main]
 async fn main() {
     // Load environment variables
     dotenvy::dotenv().ok();
 
     let pool = db::connect::establish_connection_pool();
+    
+    // Run migrations
+    {
+        let mut conn = pool.get().expect("Failed to get DB connection from pool");
+        conn.run_pending_migrations(MIGRATIONS).expect("Failed to run migrations");
+    }
+
     let state = AppState { db: pool };
 
     // build our application
@@ -39,6 +49,20 @@ async fn main() {
         .nest(
             "/prices",
             routes::prices::router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::auth_middleware,
+            )),
+        )
+        .nest(
+            "/categories",
+            routes::categories::router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::auth_middleware,
+            )),
+        )
+        .nest(
+            "/units",
+            routes::units::router().layer(axum::middleware::from_fn_with_state(
                 state.clone(),
                 middleware::auth_middleware,
             )),

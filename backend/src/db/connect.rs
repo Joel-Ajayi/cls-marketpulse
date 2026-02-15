@@ -12,7 +12,7 @@ pub fn establish_connection_pool() -> DbPool {
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     // 2. Setup the Manager
-    let mut manager = ConnectionManager::<PgConnection>::new(db_url);
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
 
     // 3. Create the Pool (5-10 connections is standard for a class project)
     Pool::builder()

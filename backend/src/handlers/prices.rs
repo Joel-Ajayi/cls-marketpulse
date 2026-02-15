@@ -1,10 +1,12 @@
 use crate::db::connect::get_connection;
-use crate::db::models::{NewPriceEntry, PriceEntry, Unit};
+use crate::db::models::{Item, NewPriceEntry, PriceEntry, Unit};
 use crate::db::schema::{items, price_entries, units};
+use crate::middleware::CurrentUser;
 use crate::AppState;
 use axum::extract::{Path, State};
-use axum::{http::StatusCode, Json};
+use axum::{http::StatusCode, Extension, Json};
 use diesel::prelude::*;
+use diesel::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -18,22 +20,37 @@ pub struct CreatePriceEntryPayload {
 
 pub async fn add_price(
     State(state): State<AppState>,
+    Extension(user): Extension<CurrentUser>,
     Json(payload): Json<CreatePriceEntryPayload>,
 ) -> Result<Json<String>, (StatusCode, String)> {
     let mut conn = get_connection(&state.db)?;
 
-    // 1. Add Price Entry
+    // 1. Verify Item Ownership
+    let item_exists = items::table
+        .find(payload.item_id)
+        .filter(items::user_id.eq(user.id))
+        .first::<Item>(&mut conn)
+        .optional()
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if item_exists.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Item not found or unauthorized".to_string(),
+        ));
+    }
+
+    // 2. Add Price Entry
     diesel::insert_into(price_entries::table)
         .values(NewPriceEntry {
             item_id: payload.item_id,
             unit_id: payload.unit_id,
-            price: (payload.price * 100.0) as i64,
+            price: payload.price as i64,
         })
         .execute(&mut conn)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // 2. Update Item's Default Unit (and Category if provided)
-
+    // 3. Update Item's Default Unit (and Category if provided)
     let target = items::table.filter(items::id.eq(payload.item_id));
 
     if let Some(cat_id) = payload.category_id {
@@ -57,9 +74,25 @@ pub struct PriceHistoryResponse {
 
 pub async fn get_history(
     State(state): State<AppState>,
+    Extension(user): Extension<CurrentUser>,
     Path(item_id): Path<Uuid>,
 ) -> Result<Json<Vec<PriceHistoryResponse>>, (StatusCode, String)> {
     let mut conn = get_connection(&state.db)?;
+
+    // Verify ownership
+    let item_exists = items::table
+        .find(item_id)
+        .filter(items::user_id.eq(user.id))
+        .first::<Item>(&mut conn)
+        .optional()
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if item_exists.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Item not found or unauthorized".to_string(),
+        ));
+    }
 
     let results = price_entries::table
         .inner_join(units::table)
@@ -74,7 +107,7 @@ pub async fn get_history(
         .map(|(entry, unit)| PriceHistoryResponse {
             date: entry.created_at.to_string(),
             unit: unit.name,
-            price: entry.price as f64 / 100.0,
+            price: entry.price as f64,
         })
         .collect();
 
