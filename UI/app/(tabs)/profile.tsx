@@ -29,7 +29,7 @@ export default function Profile() {
     return (
         <ScrollView className="flex-1 bg-gray-50 dark:bg-slate-900">
             {/* Header with Primary Color Background */}
-            <View className="bg-[#047857] p-6 pt-12 mb-6 items-center shadow-lg">
+            <View className="bg-[#047857] p-6 pt-24 mb-6 items-center shadow-lg">
                 <View className="w-24 h-24 bg-white/20 rounded-full items-center justify-center mb-4 border-2 border-white/30">
                     <User size={48} color="white" />
                 </View>

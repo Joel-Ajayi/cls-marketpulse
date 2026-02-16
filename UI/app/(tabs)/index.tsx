@@ -69,7 +69,7 @@ export default function Dashboard() {
     return (
         <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-900">
             {/* Header */}
-            <View className="p-6 pt-16 pb min-h-[220px] bg-[#047857] pb-8 rounded-b-3xl mt-[-55px] shadow-lg z-10">
+            <View className="p-6 pt-16 pb min-h-[220px] bg-[#047857] pb-8 rounded-b-3xl mt-[-10px] shadow-lg z-10">
                 <Text className="text-sm text-green-100 font-medium opacity-90">Location: Lagos, NG</Text>
                 <Text className="text-3xl font-bold text-white mt-1">Market Board</Text>
 
