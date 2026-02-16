@@ -5,10 +5,10 @@ import { Platform } from 'react-native';
 // Use special IP for Android Emulator, localhost for iOS/Web
 const IP_ADDR = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const DEV_API_URL = `http://${IP_ADDR}:8000`;
-const PROD_API_URL = 'https://cls_marketplace.yotstack.tech/api';
+const PROD_API_URL = 'https://cls-marketpulse.yotstack.tech';
 
 // Toggle this for production build
-const IS_PROD = false;
+const IS_PROD = true;
 
 export const API_URL = IS_PROD ? PROD_API_URL : DEV_API_URL;
 

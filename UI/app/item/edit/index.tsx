@@ -46,9 +46,9 @@ export default function EditItem() {
             setImage(item.image || null);
             setOriginalImage(item.image || null);
 
-            // Format price: divide by 100 if it exists
+            // Format price
             if (item.current_price !== undefined && item.current_price !== null) {
-                setCurrentPrice((item.current_price / 100).toString());
+                setCurrentPrice(item.current_price.toString());
             }
             if (item.unit) {
                 setCurrentUnit(item.unit);

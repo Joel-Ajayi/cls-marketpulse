@@ -53,21 +53,7 @@ export default function AddPrice() {
             const lastEntry = historyReversed.find(h => h.unit === unit.name);
 
             if (lastEntry) {
-                // Price in history is number (e.g. 500.0), input expects string
-                // Depending on how backend sends it. Backend divides by 100?
-                // Backend: price: entry.price as f64 (which is integer stored). 
-                // Ah, the generic item list divides by 100? No, wait. 
-                // In prices.rs: push(ItemResponse {... current_price: p.price ...}) where p.price is i64.
-                // In frontend types: current_price?: number.
-                // Usually we divide by 100 if it's cents.
-                // Let's assume the API returns the raw number as stored.
-                // If it was stored as 50000 (meaning 500.00), we need to display 500.
-                // Wait, in `add_price` submit we do: price: parseFloat(price) (sent as f64 to backend payload) -> backend mults by 100.
-                // So backend stores cents.
-                // `get_history` returns `price: entry.price as f64`. So it returns cents.
-                // We need to divide by 100 to show in UI.
-
-                const value = (lastEntry.price / 100).toString();
+                const value = lastEntry.price.toString();
                 setPrice(value);
             } else {
                 setPrice('');
