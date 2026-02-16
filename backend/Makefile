@@ -1,8 +1,14 @@
-TAG ?= latest
+REGISTRY = ghcr.io/joel-ajayi
+IMAGE_NAME = cls-marketpulse
 
-.PHONY: build-and-push
+TAG := $(shell git rev-parse --short HEAD)
+FULL_IMAGE_NAME = $(REGISTRY)/$(IMAGE_NAME):$(TAG)
 
-build-and-push:
-	docker build -t ghcr.io/joel-ajayi/cls-marketpulse:latest .
-	docker push ghcr.io/joel-ajayi/cls-marketpulse:latest
+.PHONY: build push deploy all
 
+# 2. The Push Command
+build_and_push:
+	@echo "🏗️  Building Docker image: $(FULL_IMAGE_NAME):$(TAG)..."
+	docker build -t $(FULL_IMAGE_NAME) .
+	@echo "🚀 Pushing to GitHub Container Registry..."
+	docker push $(FULL_IMAGE_NAME)
