@@ -39,7 +39,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.UI"
+      "package": "com.anonymous.UI",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f50441ed-df6b-44f4-a890-614d7331713b"
+      }
     }
   }
 }
