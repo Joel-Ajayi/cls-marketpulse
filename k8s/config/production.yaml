@@ -1,0 +1,9 @@
+appNamespace: "cls-marketpulse"
+
+domainName: "cls-marketpulse.yotstack.tech"
+
+tlsSecretName: "yotstack-tech-tls"
+tlsIssuerName: "letsencrypt-prod"
+
+image:
+  repository: "ghcr.io/joel-ajayi/cls-marketpulse"

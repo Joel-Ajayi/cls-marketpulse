@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ appNamespace }}-api"
+  namespace: "{{ appNamespace }}"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "{{ appNamespace }}-api"
+  template:
+    metadata:
+      labels:
+        app: "{{ appNamespace }}-api"
+    spec:
+      imagePullSecrets:
+        - name: ghcr-creds
+      containers:
+        - name: profile-container
+          image: "{{ image.repository }}:{{ args.image_tag }}"
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ appNamespace }}-secrets"
+                  key: DATABASE_URL
+            - name: RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ appNamespace }}-secrets"
+                  key: RESEND_API_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ appNamespace }}-secrets"
+                  key: JWT_SECRET
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+              cpu: 100m

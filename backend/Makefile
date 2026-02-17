@@ -9,6 +9,6 @@ FULL_IMAGE_NAME = $(REGISTRY)/$(IMAGE_NAME):$(TAG)
 # 2. The Push Command
 build_and_push:
 	@echo "🏗️  Building Docker image: $(FULL_IMAGE_NAME):$(TAG)..."
-	docker build -t $(FULL_IMAGE_NAME) .
+	docker build --no-cache -t $(FULL_IMAGE_NAME) .
 	@echo "🚀 Pushing to GitHub Container Registry..."
 	docker push $(FULL_IMAGE_NAME)

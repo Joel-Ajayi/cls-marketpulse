@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: "{{ appNamespace }}-ingressroute"
+  namespace: "{{ appNamespace }}"
+spec:
+  entryPoints:
+    - websecure #port 443
+  routes:
+    - match: Host(`{{ domainName }}`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: "{{ appNamespace }}-api-service"
+          port: 80
+  tls:
+    secretName: "{{ tlsSecretName }}"

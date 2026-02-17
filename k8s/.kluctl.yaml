@@ -1,0 +1,10 @@
+targets:
+  - name: production
+    args:
+      environment: production
+    context: do-syd1-k8s-1-34-1-do-3-syd1-1770467714659
+
+args:
+  - name: environment
+
+discriminator: cls_marketpulse-{{ target.name }}

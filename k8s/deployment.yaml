@@ -1,0 +1,19 @@
+# The order, the variables, and the inclusion of sub-folders
+vars:
+  - file: config/{{ args.environment }}.yaml
+
+deployments:
+  - path: namespaces
+  - path: storage
+  - barrier: true
+  - path: secrets
+  - barrier: true
+  - path: postgres
+  - barrier: true
+  - path: ingress
+  - path: backend
+  - path: backend_deploy
+
+commonLabels:
+  project: "cls_marketpulse"
+  env: "{{ args.environment }}"

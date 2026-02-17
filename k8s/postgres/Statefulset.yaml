@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ appNamespace }}-postgres"
+  namespace: "{{ appNamespace }}"
+spec:
+  serviceName: "{{ appNamespace }}-postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ appNamespace }}-postgres"
+  template:
+    metadata:
+      labels:
+        app: "{{ appNamespace }}-postgres"
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_DB
+              value: "marketpulse"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ appNamespace }}-secrets"
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: "{{ appNamespace }}-postgres-init"
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "do-block-storage" # DigitalOcean's storage class
+        resources:
+          requests:
+            storage: 5Gi
